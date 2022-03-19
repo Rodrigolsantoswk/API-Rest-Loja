@@ -208,9 +208,10 @@ def InserirMarca():
 def deleteMarca(id):
     request.environ['user']
 
-    marcaObj = marca.query.filter_by(idmarca=id).first()
-
     try:
+        marcaObj = marca.query.filter_by(idmarca=id).first()
+        if marcaObj is None:
+            return geraResponse(201, "Marca", {}, "Esta marca não existe")
         db.session.delete(marcaObj)
         db.session.commit()
         return geraResponse(200, "Marca", marcaObj.toJson(), "Marca deletada")
@@ -274,20 +275,39 @@ def InserirProduto():
         return geraResponse(400, "Produto", {}, "Sem o JSON")
 
     try:
-        for i in ['nomeMarca', 'idCategoria']:
+        for i in ['nomeProduto', 'Preco', 'idMarca']:
             if i not in body:
-                return geraResponse(400, "Marca", {}, "without: " + i)
+                return geraResponse(400, "Produto", {}, "without: " + i)
 
-        nomeMarca = body['nomeMarca']
-        idCategoria = body['idCategoria']
-        marcaObj = marca(nomemarca=nomeMarca, idcategoria=idCategoria)
+        nomeProduto = body['nomeProduto']
+        Preco = body['Preco']
+        idMarca = body['idMarca']
+        produtoObj = produto(nomeproduto=nomeProduto, preco=Preco, idmarca=idMarca)
 
-        db.session.add(marcaObj)  # Insere no banco de dados
+        db.session.add(produtoObj)  # Insere no banco de dados
         db.session.commit()  # Realiza Commit
-        return geraResponse(201, "Marca", marcaObj.toJson(), "Marca inserida com sucesso")
+        return geraResponse(201, "Produto", produtoObj.toJson(), "Marca inserida com sucesso")
     except Exception as e:
         print(e)
-        return geraResponse(400, "Marca", {}, "Erro ao inserir Marca")  # 400 Bad Request
+        return geraResponse(400, "Produto", {}, "Erro ao inserir Marca")  # 400 Bad Request
+
+
+@app.route("/produto/<id>", methods=["DELETE"])
+def deleteProduto(id):
+    request.environ['user']
+    try:
+        produtoObj = produto.query.filter_by(idproduto=id).first()
+        if produtoObj is None:
+            return geraResponse(201, "Produto", {}, "Este produto não existe")
+        db.session.delete(produtoObj)
+        db.session.commit()
+        return geraResponse(200, "Produto", produtoObj.toJson(), "Produto deletado")
+    except Exception as e:
+        print(e)
+        return geraResponse(400, "Produto", {}, "Erro ao deletar Produto")
+
+
+
 
 
 def main():

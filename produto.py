@@ -12,7 +12,7 @@ class produto(db.Model):
     # Retorna um Json com os atributos da classe
     def toJson(self):
         return {
-            "idMarca": self.idmarca,
-            "nomeMarca": self.nomemarca,
-
+            "idMarca": self.nomeproduto,
+            "nomeMarca": self.preco,
+            "idMarca": self.idmarca
         }
