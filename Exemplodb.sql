@@ -24,15 +24,6 @@ idMarca				int not null,
 constraint fk_idMarca foreign key(idMarca) references Marca(idMarca),
 constraint pk_idProduto primary key (idProduto));
 
-CREATE TABLE Venda(
-idVenda				int identity,
-dtInicioVenda		datetime not null default current_timestamp,
-dtFimVenda			datetime,
-idCaixa				int not null,
-
-constraint fk_idCaixa foreign key(idCaixa) references Caixa(idCaixa),
-constraint pk_idVenda primary key (idVenda));
-
 CREATE TABLE Caixa(
 idCaixa				int identity,
 nomeCaixa			varchar(50) not null,
@@ -41,6 +32,14 @@ InseridoEm			datetime default current_timestamp,
 
 constraint pk_idCaixa primary key(idCaixa));
 
+CREATE TABLE Venda(
+idVenda				int identity,
+dtInicioVenda		datetime not null default current_timestamp,
+dtFimVenda			datetime,
+idCaixa				int not null,
+
+constraint fk_idCaixa foreign key(idCaixa) references Caixa(idCaixa),
+constraint pk_idVenda primary key (idVenda));
 
 CREATE TABLE Venda_Produto(
 idVenda_Produto		int identity,

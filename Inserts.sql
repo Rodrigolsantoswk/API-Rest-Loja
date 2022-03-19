@@ -38,14 +38,14 @@
   (CAST('21-10-2021  14:18:00' AS Datetime), CAST('21-10-2021 14:22:00' AS Datetime), 3)
 
   INSERT INTO Venda_Produto VALUES
-  (4, 1),
-  (4, 1),
-  (4, 2),
-  (5, 3),
-  (6, 5),
-  (6, 4),
-  (7, 6)
-
+  (1, 1),
+  (1, 1),
+  (1, 2),
+  (2, 3),
+  (3, 5),
+  (3, 4),
+  (4, 6)
+  
   SELECT * FROM Venda
   SELECT * FROM produto
   SELECT * FROM Venda_Produto
