@@ -8,6 +8,7 @@ class produto(db.Model):
     nomeproduto = db.Column(db.String(35), nullable=False)
     preco = db.Column(db.Float, nullable=False)
     idmarca = db.Column(db.Integer, db.ForeignKey('marca.idmarca'), nullable=False)
+    # produtoVenda = db.Column(db.Integer, db.ForeignKey('venda_produto.idproduto'), nullable=True)
 
     # Retorna um Json com os atributos da classe
     def toJson(self):

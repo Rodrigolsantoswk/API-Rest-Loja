@@ -8,6 +8,7 @@ class caixa(db.Model):
     nomecaixa = db.Column(db.String(30), nullable=False)
     datanascimentocaixa = db.Column(db.Date, nullable=False)
     inseridoem = db.Column(db.DateTime)
+    vendas = db.Column(db.Integer, db.ForeignKey('venda.idcaixa'), nullable=False)
 
     # Retorna um Json com os atributos da classe
     def toJson(self):

@@ -1,14 +1,15 @@
-from flask import Flask, request, Response
+from flask import request, Response
 import json
 from sqlalchemy.orm import aliased
 from pprint import pprint
-from flask_sqlalchemy import get_debug_queries
 from dbconfig import db, app
 from datetime import datetime
 from caixa import caixa
 from marca import marca
 from categoria import categoria
 from produto import produto
+from venda import venda
+from venda_produto import venda_produto
 
 
 # Retorna um response
@@ -173,7 +174,7 @@ def selecionaMarcas():
             body.append(obj)
             cont = 0
             obj = {}
-        
+
         return geraResponse(200, "Marcas", body, "Ok")
     except Exception as e:
         pprint("Categoria: " + str(e))
@@ -233,7 +234,7 @@ def selecionaProdutos():
                                   categ.idcategoria, categ.nomecategoria). \
             select_from(prod). \
             join(marc, marc.idmarca == prod.idmarca). \
-            join(categ, marc.idcategoria == categ.idcategoria).\
+            join(categ, marc.idcategoria == categ.idcategoria). \
             all()
         print(result)
         obj = {}
@@ -254,7 +255,7 @@ def selecionaProdutos():
                     obj["nomMarca"] = j
                 if cont == 5:
                     obj["idCategoria"] = j
-                if cont == 5:
+                if cont == 6:
                     obj["nomeCategoria"] = j
                 cont += 1
             body.append(obj)
@@ -307,7 +308,205 @@ def deleteProduto(id):
         return geraResponse(400, "Produto", {}, "Erro ao deletar Produto")
 
 
+@app.route("/venda", methods=["GET"])
+def selecionaVenda():
+    # Requisita o middleware para acessar a rota
+    request.environ['user']
+    body = []
 
+    try:
+        cx, vnd = aliased(caixa), aliased(venda)
+        # Pesquisa o objeto no banco de dados e retorna uma lista de objetos
+        result = db.session.query(vnd.idvenda, vnd.dtiniciovenda, vnd.dtfimvenda, cx.idcaixa, cx.nomecaixa,
+                                  cx.datanascimentocaixa, cx.inseridoem). \
+            select_from(vnd). \
+            join(cx, cx.idcaixa == vnd.idcaixa). \
+            all()
+        print(result)
+        obj = {}
+        cont = 0
+
+        for i in result:
+            for j in i:
+                if cont == 0:
+                    obj["idVenda"] = j
+                if cont == 1:
+                    obj["dtInicioVenda"] = str(j)
+                if cont == 2:
+                    obj["dtFimVenda"] = str(j)
+                if cont == 3:
+                    obj["idCaixa"] = j
+                if cont == 4:
+                    obj["nomeCaixa"] = j
+                if cont == 5:
+                    obj["dataNascimentoCaixa"] = str(j)
+                if cont == 6:
+                    obj["inseridoEm"] = str(j)
+                cont += 1
+            body.append(obj)
+            cont = 0
+            obj = {}
+
+        return geraResponse(200, "Produto", body, "Ok")
+    except Exception as e:
+        pprint("Produto: " + str(e))
+        return geraResponse(400, "Produto", body, "Erro ao selecionar Produto")
+
+
+@app.route("/FinalizarVenda/<id>", methods=["PUT"])
+def atualizarVenda(id):
+    request.environ['user']
+
+    vendaObj = venda.query.filter_by(idvenda=id).first()
+
+    body = request.get_json()
+
+    try:
+        if 'dtInicioVenda' in body:
+            vendaObj.dtiniciovenda = body['dtiniciovenda']
+        if 'dtFimVenda' in body:
+            now = datetime.now()
+            vendaObj.dtfimvenda = now
+        if 'idCaixa' in body:
+            vendaObj.idcaixa = body['idcaixa']
+
+        if len(body) < 1:
+            return geraResponse(400, "Venda", {}, "JSON não pode estar vazio")
+        else:
+            lista = ['dtInicioVenda', 'dtFimVenda', 'idCaixa']
+            lista2 = body.keys()
+            cont = 0
+            soma = 0
+            lista3 = []
+            for i in lista2:
+                for j in lista:
+                    if i == j:
+                        cont += 1
+                if cont == 0:
+                    soma += 1
+                    lista3.append(i)
+
+                cont = 0
+
+            if soma > 0:
+                return geraResponse(400, "Venda", {}, "Parâmetro(s) enviado(s) não permitido(s)" + str(lista3))
+
+        db.session.add(vendaObj)
+        db.session.commit()
+        return geraResponse(200, "Venda", vendaObj.toJson(), "Dado(s) alterado(s) com sucesso")
+    except Exception as e:
+        print(e)
+        return geraResponse(400, "Venda", {}, "Erro ao atualizar")
+
+
+@app.route("/venda_produto/<id>", methods=["GET"])
+def selecionaVenda_produto(id):
+    # Requisita o middleware para acessar a rota
+    request.environ['user']
+    body = []
+    print(id)
+    try:
+        # Pesquisa o objeto no banco de dados e retorna uma lista de objetos
+        result = db.session.query(venda_produto.idvenda_produto, venda_produto.preco, venda.idvenda, venda.dtiniciovenda
+                                  , venda.dtfimvenda, caixa.idcaixa, caixa.nomecaixa, caixa.datanascimentocaixa,
+                                  caixa.inseridoem, produto.idproduto, produto.nomeproduto, produto.preco
+                                  , marca.idmarca, marca.nomemarca, categoria.idcategoria, categoria.nomecategoria). \
+            select_from(venda_produto). \
+            join(venda, venda.idvenda == venda_produto.idvenda). \
+            join(produto, produto.idproduto == venda_produto.idproduto). \
+            join(caixa, caixa.idcaixa == venda.idcaixa). \
+            join(marca, marca.idmarca == produto.idmarca). \
+            join(categoria, categoria.idcategoria == marca.idmarca). \
+            filter(venda.idvenda == id).all()
+        print(result)
+        obj = {}
+        cont = 0
+
+        for i in result:
+            for j in i:
+                if cont == 0:
+                    obj["idVenda_Produto"] = j
+                if cont == 1:
+                    obj["Preco"] = j
+                if cont == 2:
+                    obj["idVenda"] = j
+                if cont == 3:
+                    obj["dtInicioVenda"] = str(j)
+                if cont == 4:
+                    obj["dtFimVenda"] = str(j)
+                if cont == 5:
+                    obj["idCaixa"] = j
+                if cont == 6:
+                    obj["nomeCaixa"] = j
+                if cont == 7:
+                    obj["dataNascimentoCaixa"] = str(j)
+                if cont == 8:
+                    obj["inseridoEm"] = str(j)
+                if cont == 9:
+                    obj["idProduto"] = j
+                if cont == 10:
+                    obj["nomeProduto"] = j
+                if cont == 11:
+                    obj["Preco"] = j
+                if cont == 12:
+                    obj["idMarca"] = j
+                if cont == 13:
+                    obj["nomeMarca"] = j
+                if cont == 14:
+                    obj["idCategoria"] = j
+                if cont == 15:
+                    obj["nomeCategoria"] = j
+                cont += 1
+            body.append(obj)
+            cont = 0
+            obj = {}
+
+        return geraResponse(200, "venda_produto", body, "OK")
+    except Exception as e:
+        return geraResponse(400, "venda_produto", {}, "Erro ao selecionar venda_produto")
+
+
+@app.route("/venda_produto/<id>", methods=["DELETE"])
+def deleteVendaProduto(id):
+    request.environ['user']
+    try:
+        vendaProdutoObj = venda_produto.query.filter_by(idvenda_produto=id).first()
+        if vendaProdutoObj is None:
+            return geraResponse(201, "venda_produto", {}, "Este venda_produto não existe")
+        db.session.delete(vendaProdutoObj)
+        db.session.commit()
+        return geraResponse(200, "venda_produto", vendaProdutoObj.toJson(), "venda_produto deletado")
+    except Exception as e:
+        print(e)
+        return geraResponse(400, "venda_produto", {}, "Erro ao deletar venda_produto")
+
+
+@app.route("/venda_produto", methods=["POST"])
+def InserirVenda_Produto():
+    body = request.get_json()  # Requisita o body na requisição
+
+    if body is None:  # Se o body estiver vazio ou não existir, então retorna response
+        return geraResponse(400, "venda_produto", {}, "Sem o JSON")
+
+    try:
+        for i in ['idVenda', 'idProduto']:
+            if i not in body:
+                return geraResponse(400, "Produto", {}, "without: " + i)
+
+        produtoObj = produto.query.filter_by(idproduto=body['idProduto']).first()
+
+        idVenda = body['idVenda']
+        idProduto = body['idProduto']
+        Preco = produtoObj.preco
+
+        venda_produtoObj = venda_produto(idvenda=idVenda, preco=Preco, idproduto=idProduto)
+
+        db.session.add(venda_produtoObj)  # Insere no banco de dados
+        db.session.commit()  # Realiza Commit
+        return geraResponse(201, "venda_produto", produtoObj.toJson(), "venda_produto inserida com sucesso")
+    except Exception as e:
+        print(e)
+        return geraResponse(400, "venda_produto", {}, "Erro ao inserir venda_produto")  # 400 Bad Request
 
 
 def main():
