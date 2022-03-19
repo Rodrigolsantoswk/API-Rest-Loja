@@ -4,7 +4,6 @@ from dotenv import load_dotenv, dotenv_values, find_dotenv
 from flask_sqlalchemy import SQLAlchemy
 from flask import Flask
 from middleware import Middleware
-import pyodbc
 
 # Carrega e atribui os valores obtidos nas variáveis de ambiente
 load_dotenv(find_dotenv())
@@ -20,6 +19,7 @@ midd_user = os.environ.get('midduser', default='none')
 midd_password = os.environ.get('middpassword', default='none')
 
 app = Flask("appLoja")  # Inicia um novo Web Service
+app.config['SQLALCHEMY_ECHO'] = True
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True  # Rastreio de models_committed e before_models_committed
 
 # Formata a URI como uma string de consulta para URL
